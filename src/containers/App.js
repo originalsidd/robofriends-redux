@@ -1,42 +1,44 @@
 import React from 'react';
+import {connect } from 'react-redux';
 import CardList from '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import Scroll from '../components/Scroll';
-import ErrorBoundry from '../components/ErrorBoundry';
 import './App.css';
-// import { robots } from './robots';
-// destructured robots as its not 'export default' in robots.js
-// therefor if only export is used, it means multiple exports are present although in robots its a single element (list)
-// so we need to destructure it
+// import ErrorBoundry from '../components/ErrorBoundry';
+
+import { setSearchField, requestRobots } from '../actions'
+
+const mapStateToPRops = (state) => {
+	return {
+		searchField: state.searchRobots.searchField,
+		robots: state.requestRobots.robots,
+		isPending: state.requestRobots.isPending,
+		error: state.requestRobots.error
+	}
+}
+
+const mapDispatchToProps = (dispatch) => {
+	return {
+		onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+		onRequestRobots: () => dispatch(requestRobots())
+	}
+}
 
 class App extends React.Component {
-	constructor() {
-		super();
-		this.state = {
-			robots: [],
-			searchfield: ''
-		}
-	}
 
 	componentDidMount() {
-		fetch('https://jsonplaceholder.typicode.com/users')
-			.then(response => response.json())
-			.then(users => this.setState({ robots: users }));
-	}
-
-	onSearchChange = (event) => {
-		this.setState({ searchfield: event.target.value })
+		this.props.onRequestRobots();
 	}
 
 	render() {
-		const {robots, searchfield} = this.state;
-		const filteredRobots =robots.filter(robot =>  robot.name.toLowerCase().includes(searchfield.toLowerCase()));
-		return !robots.length ?
+		const { searchField, onSearchChange, robots, isPending } = this.props;
+		const filteredRobots =robots.filter(robot =>  robot.name.toLowerCase().includes(searchField.toLowerCase()));
+		return isPending ?
 			<h1>Loading...</h1> : (filteredRobots.length ? 
 				(
 					<div className='tc'>
 						<h1 className='f1'>RoboFriends</h1>
-						<SearchBox searchChange={this.onSearchChange} />
+						<SearchBox searchChange={onSearchChange} />
 						<Scroll>
 							<CardList robots={filteredRobots} />
 						</Scroll>
@@ -45,12 +47,12 @@ class App extends React.Component {
 				(
 					<div className='tc'>
 						<h1 className='f1'>RoboFriends</h1>
-						<SearchBox searchChange={this.onSearchChange} />
-						<h2 className="empty">No robots with name {searchfield}</h2>
+						<SearchBox searchChange={onSearchChange} />
+						<h2 className="empty">No robots with name {searchField}</h2>
 					</div>
 				)
 			)
 	}
 }
 
-export default App;
+export default connect(mapStateToPRops, mapDispatchToProps)(App);
